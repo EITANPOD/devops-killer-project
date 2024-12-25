@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - recipe-network
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - recipe-network
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - SQLALCHEMY_DATABASE_URI=postgresql://username:password@db:5432/recipes_db
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
+  db:
+    image: postgres:13-alpine
+    ports:
+      - "5432:5432"
+    networks:
+      - recipe-network
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=recipes_db
+      - LANG=en_US.utf8
+      - LC_ALL=en_US.utf8
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U username -d recipes_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  recipe-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
