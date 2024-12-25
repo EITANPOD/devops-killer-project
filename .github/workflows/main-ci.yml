@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      - uses: actions/checkout@v4
+
+      - name: Run a one-line script
+        run: echo "Starting CI Process"
+
+
+      - uses: KengoTODA/actions-setup-docker-compose@v1
+        with:
+          version: '2.14.2'
+
+
+      - name: run docker compose 
+        run: docker compose up -d
+
+
+      - uses: GuillaumeFalourd/wait-sleep-action@v1
+        with:
+          time: '15'
+
+
+      - name: tests by using curl
+        run: curl http://localhost:80
+
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382853618.dkr.ecr.us-east-1.amazonaws.com
+
+
+      - name: Build and push Docker image from frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:frontend-latest
+
+      
+      - name: Build and push Docker image from backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:backend-latest
