@@ -25,7 +25,6 @@ jobs:
       - name: Generate date-time and next version
         id: versioning
         run: |
-          # Load existing counter
           if [ -f ".env" ]; then
             source .env
           else
