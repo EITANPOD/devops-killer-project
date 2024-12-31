@@ -67,9 +67,14 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git checkout -B versioning
+          git pull origin versioning --rebase || echo "No remote versioning branch to pull from"
           git add .env
-          git commit -m "Update version counter to ${{ env.VERSION }}"
-          git push origin versioning
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update version counter to ${{ env.VERSION }}"
+            git push origin versioning
+          fi
 
       - name: Log in to Amazon ECR
         run: |
