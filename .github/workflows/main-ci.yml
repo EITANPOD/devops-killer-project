@@ -66,8 +66,18 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+      
+          # Stash any existing changes to avoid conflicts
+          git stash --include-untracked
+      
+          # Switch to versioning branch and pull the latest changes
           git checkout -B versioning
           git pull origin versioning --rebase || echo "No remote versioning branch to pull from"
+      
+          # Apply stashed changes
+          git stash pop || echo "No stashed changes to apply"
+      
+          # Update and commit .env file
           git add .env
           if git diff --cached --quiet; then
             echo "No changes to commit"
