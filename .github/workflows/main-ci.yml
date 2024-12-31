@@ -16,6 +16,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Run a one-line script
+        run: echo "Starting CI Process"
+
+
+      - uses: KengoTODA/actions-setup-docker-compose@v1
+        with:
+          version: '2.14.2'
+
+
+      - name: run docker compose 
+        run: docker compose up -d
+
+
+      - uses: GuillaumeFalourd/wait-sleep-action@v1
+        with:
+          time: '15'
+
+      - name: tests by using curl
+        run: curl http://localhost:80
+
       - name: Fetch versioning branch
         run: git fetch origin versioning
 
@@ -31,7 +51,6 @@ jobs:
             VERSION_COUNTER=0
           fi
 
-          # Increment counter
           VERSION_COUNTER=$((VERSION_COUNTER + 1))
 
           # Generate date-time string
