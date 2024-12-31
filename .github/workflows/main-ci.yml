@@ -2,52 +2,61 @@ name: CI
 
 on:
   push:
-    branches: main
+    branches:
+      - main
+      - '!versioning'
   pull_request:
-    branches: main
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      
       - uses: actions/checkout@v4
 
-      - name: Run a one-line script
-        run: echo "Starting CI Process"
+      - name: Fetch versioning branch
+        run: git fetch origin versioning
 
+      - name: Checkout versioning branch
+        run: git checkout versioning -- .env || echo "No existing .env file"
 
-      - uses: KengoTODA/actions-setup-docker-compose@v1
-        with:
-          version: '2.14.2'
+      - name: Generate date-time and next version
+        id: versioning
+        run: |
+          # Load existing counter
+          if [ -f ".env" ]; then
+            source .env
+          else
+            VERSION_COUNTER=0
+          fi
 
+          # Increment counter
+          VERSION_COUNTER=$((VERSION_COUNTER + 1))
 
-      - name: run docker compose 
-        run: docker compose up -d
+          # Generate date-time string
+          DATE=$(date +%Y%m%d%H%M)
 
+          # Combine date-time and counter
+          VERSION="v$DATE-$VERSION_COUNTER"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - uses: GuillaumeFalourd/wait-sleep-action@v1
-        with:
-          time: '15'
+          # Update .env file with the new counter
+          echo "VERSION_COUNTER=$VERSION_COUNTER" > .env
 
-
-      - name: tests by using curl
-        run: curl http://localhost:80
-
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
+      - name: Commit updated .env file to versioning branch
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git checkout -B versioning
+          git add .env
+          git commit -m "Update version counter to ${{ env.VERSION }}"
+          git push origin versioning
 
       - name: Log in to Amazon ECR
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382853618.dkr.ecr.us-east-1.amazonaws.com
-
 
       - name: Build and push Docker image from frontend
         uses: docker/build-push-action@v5
@@ -56,9 +65,8 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:frontend-latest
+            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:frontend-${{ env.VERSION }}
 
-      
       - name: Build and push Docker image from backend
         uses: docker/build-push-action@v5
         with:
@@ -66,4 +74,4 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:backend-latest
+            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:backend-${{ env.VERSION }}
