@@ -41,7 +41,6 @@ jobs:
           VERSION="v$DATE-$VERSION_COUNTER"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-          # Update .env file with the new counter
           echo "VERSION_COUNTER=$VERSION_COUNTER" > .env
 
       - name: Commit updated .env file to versioning branch
