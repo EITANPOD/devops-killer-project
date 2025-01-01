@@ -2,12 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - '!versioning'
+    branches: main
   pull_request:
-    branches:
-      - main
+    branches: main
 
 jobs:
   build-and-deploy:
@@ -19,15 +16,12 @@ jobs:
       - name: Run a one-line script
         run: echo "Starting CI Process"
 
-
       - uses: KengoTODA/actions-setup-docker-compose@v1
         with:
           version: '2.14.2'
 
-
-      - name: run docker compose 
+      - name: run docker compose
         run: docker compose up -d
-
 
       - uses: GuillaumeFalourd/wait-sleep-action@v1
         with:
@@ -36,74 +30,47 @@ jobs:
       - name: tests by using curl
         run: curl http://localhost:80
 
-      - name: Fetch versioning branch
-        run: git fetch origin versioning
-
-      - name: Checkout versioning branch
-        run: git checkout versioning -- .env || echo "No existing .env file"
-
-      - name: Generate date-time and next version
-        id: versioning
-        run: |
-          if [ -f ".env" ]; then
-            source .env
-          else
-            VERSION_COUNTER=0
-          fi
-
-          VERSION_COUNTER=$((VERSION_COUNTER + 1))
-
-          # Generate date-time string
-          DATE=$(date +%Y%m%d%H%M)
-
-          # Combine date-time and counter
-          VERSION="v$DATE-$VERSION_COUNTER"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-          echo "VERSION_COUNTER=$VERSION_COUNTER" > .env
-
-      - name: Commit updated .env file to versioning branch
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-      
-          # Stash any existing changes to avoid conflicts
-          git stash --include-untracked
-      
-          # Switch to versioning branch and pull the latest changes
-          git checkout -B versioning
-          git pull origin versioning --rebase || echo "No remote versioning branch to pull from"
-      
-          # Apply stashed changes
-          git stash pop || echo "No stashed changes to apply"
-      
-          # Update and commit .env file
-          git add .env
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update version counter to ${{ env.VERSION }}"
-            git push origin versioning
-          fi
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382853618.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+      - name: Get the latest commit SHA
+        id: git-info
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Build and push Docker image from frontend
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./frontend
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:frontend-${{ env.VERSION }}
+            992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:frontend-${{ env.sha }}
 
       - name: Build and push Docker image from backend
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           file: ./backend/Dockerfile
           push: true
           tags: |
-            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:backend-${{ env.VERSION }}
+            992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:backend-${{ env.sha }}
+
+      # - name: Update image tags in GitOps repository
+      #   run: |
+      #     git clone https://github.com/your-org/gitops-repo.git
+      #     cd gitops-repo
+      #     sed -i "s|image: .*frontend.*|image: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:frontend-${{ env.sha }}|" path/to/frontend/deployment.yaml
+      #     sed -i "s|image: .*backend.*|image: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:backend-${{ env.sha }}|" path/to/backend/deployment.yaml
+      #     git config user.name "GitHub Actions"
+      #     git config user.email "actions@github.com"
+      #     git add .
+      #     git commit -m "Update image tags to commit ${{ env.sha }}"
+      #     git push
