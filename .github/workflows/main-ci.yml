@@ -2,50 +2,37 @@ name: CI
 
 on:
   push:
-    branches: main
-  pull_request:
-    branches: main
+    branches:
+      - main
+      - staging
+      - prod
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the application repository
       - uses: actions/checkout@v4
 
-      - name: Run a one-line script
-        run: echo "Starting CI Process"
-
-      - uses: KengoTODA/actions-setup-docker-compose@v1
-        with:
-          version: '2.14.2'
-
-      - name: run docker compose
+      # Step 2: Run Docker Compose
+      - name: Run Docker Compose
         run: docker compose up -d
 
-      - uses: GuillaumeFalourd/wait-sleep-action@v1
+      - name: Wait for Services to Start
+        uses: GuillaumeFalourd/wait-sleep-action@v1
         with:
           time: '15'
 
-      - name: tests by using curl
+      - name: Test Application with curl
         run: curl http://localhost:80
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Log in to Amazon ECR
-        run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-
+      # Step 3: Build and Push Docker Images
       - name: Get the latest commit SHA
         id: git-info
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Build and push Docker image from frontend
+      - name: Build and Push Frontend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -54,7 +41,7 @@ jobs:
           tags: |
             992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:frontend-${{ env.sha }}
 
-      - name: Build and push Docker image from backend
+      - name: Build and Push Backend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -63,14 +50,39 @@ jobs:
           tags: |
             992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:backend-${{ env.sha }}
 
-      # - name: Update image tags in GitOps repository
-      #   run: |
-      #     git clone https://github.com/your-org/gitops-repo.git
-      #     cd gitops-repo
-      #     sed -i "s|image: .*frontend.*|image: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:frontend-${{ env.sha }}|" path/to/frontend/deployment.yaml
-      #     sed -i "s|image: .*backend.*|image: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:backend-${{ env.sha }}|" path/to/backend/deployment.yaml
-      #     git config user.name "GitHub Actions"
-      #     git config user.email "actions@github.com"
-      #     git add .
-      #     git commit -m "Update image tags to commit ${{ env.sha }}"
-      #     git push
+      # Step 4: Clone GitOps Repository
+      - name: Clone GitOps Repository
+        run: |
+          git clone https://github.com/EITANPOD/devops-killer-gitOps.git
+          cd devops-killer-gitOps
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      # Step 5: Update the Values File for the Correct Environment
+      - name: Update Values File
+        run: |
+          cd environments
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            env_dir="dev"
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+            env_dir="staging"
+          elif [[ "${{ github.ref_name }}" == "prod" ]]; then
+            env_dir="production"
+          elif [[ "${{ github.ref_name }}" == "dev" ]]; then
+            env_dir="dev"
+          fi
+
+          sed -i "s|frontend: .*|frontend: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:frontend-${{ env.sha }}|" $env_dir/values.yaml
+          sed -i "s|backend: .*|backend: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:backend-${{ env.sha }}|" $env_dir/values.yaml
+
+      # Step 6: Commit and Push Changes to GitOps Repository
+      - name: Commit and Push Changes
+        run: |
+          cd ..
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Update image tags for ${{ github.ref_name }} to ${{ env.sha }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
