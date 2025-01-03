@@ -62,6 +62,11 @@ jobs:
           tags: |
             992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:backend-${{ env.sha }}
 
+      - name: Login to GitHub
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
       # Step 4: Clone GitOps Repository
       - name: Clone GitOps Repository
         run: |
@@ -91,8 +96,6 @@ jobs:
       - name: Commit and Push Changes
         run: |
           cd ..
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
           git add .
           git commit -m "Update image tags for ${{ github.ref_name }} to ${{ env.sha }}"
           git push
