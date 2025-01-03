@@ -17,16 +17,16 @@ jobs:
       - uses: actions/checkout@v4
 
       # Step 2: Run Docker Compose
-      - name: Run Docker Compose
-        run: docker compose up -d
+      # - name: Run Docker Compose
+      #   run: docker compose up -d
 
-      - name: Wait for Services to Start
-        uses: GuillaumeFalourd/wait-sleep-action@v1
-        with:
-          time: '15'
+      # - name: Wait for Services to Start
+      #   uses: GuillaumeFalourd/wait-sleep-action@v1
+      #   with:
+      #     time: '15'
 
-      - name: Test Application with curl
-        run: curl http://localhost:80
+      # - name: Test Application with curl
+      #   run: curl http://localhost:80
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -71,13 +71,14 @@ jobs:
       - name: Clone GitOps Repository
         run: |
           git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/EITANPOD/devops-killer-gitOps.git
-          cd devops-killer-gitOps/environments/
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       # Step 5: Update the Values File for the Correct Environment
       - name: Update Values File
         run: |
+          cd devops-killer-gitOps/environments/
+
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             env_dir="dev"
           elif [[ "${{ github.ref_name }}" == "staging" ]]; then
