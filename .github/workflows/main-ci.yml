@@ -72,14 +72,13 @@ jobs:
         run: |
           cd /home/runner/work/
           git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/EITANPOD/devops-killer-gitOps.git
+          cd /home/runner/work/devops-killer-gitOps/environments/
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       # Step 5: Update the Values File for the Correct Environment
       - name: Update Values File
         run: |
-          cd devops-killer-gitOps/environments/
-
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             env_dir="dev"
           elif [[ "${{ github.ref_name }}" == "staging" ]]; then
