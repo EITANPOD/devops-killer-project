@@ -70,6 +70,7 @@ jobs:
       # Step 4: Clone GitOps Repository
       - name: Clone GitOps Repository
         run: |
+          cd /home/runner/work/
           git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/EITANPOD/devops-killer-gitOps.git
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -89,12 +90,13 @@ jobs:
             env_dir="dev"
           fi
 
-          sed -i "s|frontend: .*|frontend: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:frontend-${{ env.sha }}|" $env_dir/values.yaml
-          sed -i "s|backend: .*|backend: 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:backend-${{ env.sha }}|" $env_dir/values.yaml
+          sed -i "s|tag: frontend-.*|tag: frontend-${{ env.sha }}|" $env_dir/values.yaml
+          sed -i "s|tag: backend-.*|tag: backend-${{ env.sha }}|" $env_dir/values.yaml
 
       # Step 6: Commit and Push Changes to GitOps Repository
       - name: Commit and Push Changes
         run: |
+          cd /home/runner/work/devops-killer-gitOps/
           git add .
           git commit -m "Update image tags for ${{ github.ref_name }} to ${{ env.sha }}"
           git push

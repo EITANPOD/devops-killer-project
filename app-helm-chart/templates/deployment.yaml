@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    {{- include "library.labels" . | indent 2 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "library.labels" . | indent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- include "library.labels" . | indent 6 }}
+    spec:
+      containers:
+        - name: nginx-container
+          image: {{ .Values.image.repository }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-service
+spec:
+  selector:
+    {{- include "library.labels" . | indent 2}}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.port}}
+      targetPort: {{ .Values.service.targetPort }}
