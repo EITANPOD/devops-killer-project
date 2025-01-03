@@ -79,6 +79,8 @@ jobs:
       # Step 5: Update the Values File for the Correct Environment
       - name: Update Values File
         run: |
+          cd /home/runner/work/devops-killer-gitOps/environments/
+          
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             env_dir="dev"
           elif [[ "${{ github.ref_name }}" == "staging" ]]; then
