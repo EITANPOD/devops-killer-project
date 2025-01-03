@@ -28,6 +28,10 @@ jobs:
       - name: Test Application with curl
         run: curl http://localhost:80
 
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin 992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
       # Step 3: Build and Push Docker Images
       - name: Get the latest commit SHA
         id: git-info
@@ -40,7 +44,7 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:frontend-${{ env.sha }}
+            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:frontend-${{ env.sha }}
 
       - name: Build and Push Backend Docker Image
         uses: docker/build-push-action@v5
@@ -49,7 +53,7 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            992382853618.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/eitan/project:backend-${{ env.sha }}
+            992382853618.dkr.ecr.us-east-1.amazonaws.com/eitan/project:backend-${{ env.sha }}
 
       # Step 4: Clone GitOps Repository
       - name: Clone GitOps Repository
