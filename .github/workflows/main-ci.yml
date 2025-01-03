@@ -70,7 +70,7 @@ jobs:
       # Step 4: Clone GitOps Repository
       - name: Clone GitOps Repository
         run: |
-          git clone https://github.com/EITANPOD/devops-killer-gitOps.git
+          git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/EITANPOD/devops-killer-gitOps.git
           cd devops-killer-gitOps
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
