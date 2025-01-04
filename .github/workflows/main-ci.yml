@@ -105,3 +105,4 @@ jobs:
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          
