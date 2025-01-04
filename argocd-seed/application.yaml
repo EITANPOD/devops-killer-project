@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seed-app
+  namespace: argocd
+
+spec:
+  project: default
+  sources:
+  - repoURL: https://github.com/EITANPOD/devops-killer-gitOps.git
+    targetRevision: HEAD
+    path: enviorments/base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
