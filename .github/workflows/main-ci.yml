@@ -17,16 +17,16 @@ jobs:
       - uses: actions/checkout@v4
 
       # Step 2: Run Docker Compose
-      - name: Run Docker Compose
-        run: docker compose up -d
+      # - name: Run Docker Compose
+      #   run: docker compose up -d
 
-      - name: Wait for Services to Start
-        uses: GuillaumeFalourd/wait-sleep-action@v1
-        with:
-          time: '15'
+      # - name: Wait for Services to Start
+      #   uses: GuillaumeFalourd/wait-sleep-action@v1
+      #   with:
+      #     time: '15'
 
-      - name: Test Application with curl
-        run: curl http://localhost:80
+      # - name: Test Application with curl
+      #   run: curl http://localhost:80
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -93,8 +93,6 @@ jobs:
 
           sed -i "s|tag: frontend-.*|tag: frontend-${{ env.sha }}|" $env_dir/values.yaml
           sed -i "s|tag: backend-.*|tag: backend-${{ env.sha }}|" $env_dir/values.yaml
-          cd /home/runner/work/devops-killer-gitOps/
-          sed -i "s|environments: .*|environments: $env_dir|" base/values.yaml 
 
       # Step 6: Commit and Push Changes to GitOps Repository
       - name: Commit and Push Changes
