@@ -29,7 +29,7 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
-      - SQLALCHEMY_DATABASE_URI=postgresql://username:password@db:5432/recipes_db
+      - SQLALCHEMY_DATABASE_URI=postgresql://username:password@db:5432/recipesDB
     volumes:
       - ./backend:/app
     restart: unless-stopped
@@ -43,13 +43,13 @@ services:
     environment:
       - POSTGRES_USER=username
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=recipes_db
+      - POSTGRES_DB=recipesDB
       - LANG=en_US.utf8
       - LC_ALL=en_US.utf8
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U username -d recipes_db"]
+      test: ["CMD-SHELL", "pg_isready -U username -d recipesDB"]
       interval: 10s
       timeout: 5s
       retries: 5

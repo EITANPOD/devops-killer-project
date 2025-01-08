@@ -1,11 +1,42 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import boto3
+import json
+from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://username:password@db:5432/recipes_db'
+def get_db_credentials():
+    secret_name = "postgress-secrets"  # Change if your secret name is different
+    region_name = "us-east-1"  # Change to your AWS region
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(service_name='secretsmanager', region_name=region_name)
+
+    try:
+        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+    except ClientError as e:
+        print(f"Error retrieving secret: {e}")
+        return None  # Handle this properly in your app
+
+    # Parse the secret string into a dictionary
+    secret_dict = json.loads(get_secret_value_response['SecretString'])
+
+    # Extract username and password
+    db_user = secret_dict["username"]
+    db_pass = secret_dict["password"]
+
+    # Define your RDS endpoint (Replace with your actual endpoint)
+    db_host = "recipes-db.czqakocysnbb.us-east-1.rds.amazonaws.com"  
+    db_name = "recipesDB"
+
+    # Return PostgreSQL connection string
+    return f"postgresql://{db_user}:{db_pass}@{db_host}:5432/{db_name}"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = get_db_credentials()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
