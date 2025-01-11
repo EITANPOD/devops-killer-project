@@ -1,4 +1,4 @@
-const API_URL = 'http://backendgit:5000/api';
+const API_URL = 'http://app.eitp.online:5000/api';
 
 // Load recipes by category
 async function loadCategory(category) {
