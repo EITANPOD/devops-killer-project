@@ -1,4 +1,4 @@
-const API_URL = 'http://backend:5000/api';
+const API_URL = '/api';
 
 // Load recipes by category
 async function loadCategory(category) {
