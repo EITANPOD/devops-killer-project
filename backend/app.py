@@ -1,11 +1,20 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://eitanUser:eitanPassword@recipes-db.czqakocysnbb.us-east-1.rds.amazonaws.com:5432/recipesDB'
+# Get database credentials from environment variables
+DB_USER = os.environ.get('DB_USER')
+DB_PASSWORD = os.environ.get('DB_PASSWORD')
+DB_NAME = os.environ.get('DB_NAME')
+DB_HOST = os.environ.get('DB_HOST', 'recipes-db.czqakocysnbb.us-east-1.rds.amazonaws.com')
+DB_PORT = os.environ.get('DB_PORT', '5432')
+
+# Construct database URI using environment variables
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)

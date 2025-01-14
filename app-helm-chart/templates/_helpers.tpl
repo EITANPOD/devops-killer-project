@@ -23,8 +23,12 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
+
+{{/*
+common labels
+*/}}
 {{- define "library.labels" -}}
-  name: {{ .Chart.Name }}
+name: {{ .Chart.Name }}
 version: {{ .Chart.Version }}
 {{- end }}
 

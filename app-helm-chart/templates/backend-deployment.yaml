@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.appname }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.backend.appname }}
+      {{- include "app-helm-chart.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.backend.appname }}
+        {{- include "app-helm-chart.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Values.backend.appname }}
+        image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+        ports:
+        - containerPort: {{ .Values.backend.service.port }}
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: my-db-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-db-secret
+              key: DB_PASSWORD
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: my-db-secret
+              key: DB_NAME
+        - name: FLASK_APP
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.backend.configmap.name }}
+              key: FLASK_APP
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.backend.configmap.name }}
+              key: FLASK_ENV
+        resources:
+          limits:
+            cpu: {{ .Values.backend.resources.limits.cpu }}
+            memory: {{ .Values.backend.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.backend.resources.requests.cpu }}
+            memory: {{ .Values.backend.resources.requests.memory }}

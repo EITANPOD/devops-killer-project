@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: {{ .Values.backend.configmap.name }}
+data:
+    FLASK_APP: {{ .Values.backend.configmap.env.FLASK_APP }}
+    FLASK_ENV: {{ .Values.backend.configmap.env.FLASK_ENV }}
