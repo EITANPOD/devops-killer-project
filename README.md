@@ -60,19 +60,6 @@ The project is divided into three main repositories:
 
 ---
 
-## Tools Used
-
-This project was built using the following tools:
-
-- Terraform
-- Kubernetes
-- Docker
-- Helm
-- JavaScript
-- Python
-- GitHub Workflows (Actions)
-- ArgoCD
-
 ---
 
 Feel free to reach out with any questions or feedback!
