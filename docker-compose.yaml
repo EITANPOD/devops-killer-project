@@ -27,6 +27,10 @@ services:
     networks:
       - recipe-network
     environment:
+      - DB_USER=username
+      - DB_PASSWORD=password
+      - DB_NAME=recipesDB
+      - DB_HOST=db
       - FLASK_APP=app.py
       - FLASK_ENV=development
       - SQLALCHEMY_DATABASE_URI=postgresql://username:password@db:5432/recipesDB
