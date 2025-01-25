@@ -2,6 +2,8 @@
 
 Welcome to the Recipe Website Project! This repository contains the source code for a full-stack web application where users can add, edit, and delete recipes organized by categories. The project is designed to showcase DevOps skills and modern cloud infrastructure management.
 
+![my-app](https://github.com/user-attachments/assets/4dd60db9-b855-45ae-9ead-30d2c217c84b)
+
 ---
 
 ## Table of Contents
